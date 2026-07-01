@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ITElect – IT Student Election 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════ -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">&lt;/&gt;</div>
+    IT<span>ELECT</span>
+  </div>
+  <div class="nav-links">
+    <a href="#home">Home</a>
+    <a href="#candidates">Candidates</a>
+    <a href="#howto">How to Vote</a>
+    <a href="#faq">FAQ</a>
+    <a href="#" class="live" onclick="openLiveResultsPage(event)">
+      <div class="live-dot"></div> Live Results
+    </a>
+  </div>
+  <div class="nav-actions" id="nav-actions">
+    <!-- Logged-OUT state (default) -->
+    <div id="nav-logged-out">
+      <button class="btn-outline" onclick="openSignUpModal()">Sign Up</button>
+      <button class="btn-primary" onclick="openLoginModal()">Log In</button>
+    </div>
+
+    <!-- Logged-IN state (hidden until login) -->
+    <div id="nav-logged-in" style="display:none; position:relative;">
+      <button class="btn-user" id="btn-user" onclick="toggleUserMenu()">
+        <div class="user-avatar" id="user-avatar-nav">👤</div>
+        <span id="user-name-nav">Student</span>
+        <span class="user-chevron">▾</span>
+      </button>
+      <div class="user-dropdown" id="user-dropdown">
+        <div class="user-dropdown-header">
+          <div class="user-avatar-lg">👤</div>
+          <div>
+            <div class="ud-name" id="ud-name">Student</div>
+            <div class="ud-email" id="ud-email">student@university.edu</div>
+          </div>
+        </div>
+        <div class="user-dropdown-sep"></div>
+        <button class="ud-item" onclick="openVoteFromMenu()">🗳️ Cast Your Vote</button>
+        <button class="ud-item" onclick="openLiveResultsPage(); toggleUserMenu();">📊 Live Results</button>
+        <div class="user-dropdown-sep"></div>
+        <button class="ud-item ud-logout" onclick="handleLogout()">← Log Out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════ -->
+<div id="home" style="padding-left:0; padding-right:0; max-width:100%;">
+  <div class="hero-glow"></div>
+
+  
+
+  <h1 class="hero-h1">Shape the Future of <span>IT</span><br>Leadership</h1>
+
+  <p class="hero-sub">
+    Your vote matters. Choose the next generation of leaders who will drive
+    innovation, foster community, and represent the IT student body.
+  </p>
+
+  <div class="hero-ctas">
+    <button class="btn-hero-primary" onclick="openLoginModal()">Cast Your Vote →</button>
+    <button class="btn-hero-secondary" onclick="scrollToCandidates()">Meet the Candidates</button>
+  </div>
+
+  <!-- Candidate auto-scroll carousel -->
+  <div class="carousel-wrapper">
+    <div class="candidate-strip" id="candidate-strip">
+
+      <!-- Original set -->
+      <div class="candidate-card-hero">
+        <div class="chero-img accent-cyan"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Alex Chen</div><div class="c-role">President</div></div>
+      </div>
+      <div class="candidate-card-hero">
+        <div class="chero-img accent-pink"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Sarah Kim</div><div class="c-role">President</div></div>
+      </div>
+      <div class="candidate-card-hero">
+        <div class="chero-img accent-green"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Marcus Rivera</div><div class="c-role">Vice President</div></div>
+      </div>
+      <div class="candidate-card-hero">
+        <div class="chero-img accent-cyan"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Emily Zhang</div><div class="c-role">Vice President</div></div>
+      </div>
+      <div class="candidate-card-hero">
+        <div class="chero-img accent-pink"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Jordan Patel</div><div class="c-role">Secretary</div></div>
+      </div>
+      <div class="candidate-card-hero">
+        <div class="chero-img accent-green"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Taylor Wong</div><div class="c-role">Treasurer</div></div>
+      </div>
+      <div class="candidate-card-hero">
+        <div class="chero-img accent-cyan"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Nina Okonkwo</div><div class="c-role">Public Relations</div></div>
+      </div>
+      <div class="candidate-card-hero">
+        <div class="chero-img accent-pink"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Dev Patel</div><div class="c-role">Public Relations</div></div>
+      </div>
+
+      <!-- Duplicate set for seamless infinite loop -->
+      <div class="candidate-card-hero" aria-hidden="true">
+        <div class="chero-img accent-cyan"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Alex Chen</div><div class="c-role">President</div></div>
+      </div>
+      <div class="candidate-card-hero" aria-hidden="true">
+        <div class="chero-img accent-pink"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Sarah Kim</div><div class="c-role">President</div></div>
+      </div>
+      <div class="candidate-card-hero" aria-hidden="true">
+        <div class="chero-img accent-green"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Marcus Rivera</div><div class="c-role">Vice President</div></div>
+      </div>
+      <div class="candidate-card-hero" aria-hidden="true">
+        <div class="chero-img accent-cyan"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Emily Zhang</div><div class="c-role">Vice President</div></div>
+      </div>
+      <div class="candidate-card-hero" aria-hidden="true">
+        <div class="chero-img accent-pink"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Jordan Patel</div><div class="c-role">Secretary</div></div>
+      </div>
+      <div class="candidate-card-hero" aria-hidden="true">
+        <div class="chero-img accent-green"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Taylor Wong</div><div class="c-role">Treasurer</div></div>
+      </div>
+      <div class="candidate-card-hero" aria-hidden="true">
+        <div class="chero-img accent-cyan"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Nina Okonkwo</div><div class="c-role">Public Relations</div></div>
+      </div>
+      <div class="candidate-card-hero" aria-hidden="true">
+        <div class="chero-img accent-pink"><div class="candidate-placeholder">👤</div></div>
+        <div class="candidate-label"><div class="c-name">Dev Patel</div><div class="c-role">Public Relations</div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════
+     CANDIDATES
+     ═══════════════════════════════════════ -->
+<section id="candidates">
+  <div class="text-center">
+    <div class="section-eyebrow">Meet the Nominees</div>
+    <h2 class="section-h2">Election <span class="pink">Candidates</span></h2>
+    <p class="section-sub">Browse through all candidates running for each position. Get to know their vision before you vote.</p>
+  </div>
+
+  <!-- Position tabs -->
+  <div class="tab-row" id="tabs">
+    <button class="tab active"  onclick="switchTab(this, 'president')">President</button>
+    <button class="tab"         onclick="switchTab(this, 'vp')">Vice President</button>
+    <button class="tab"         onclick="switchTab(this, 'secretary')">Secretary</button>
+    <button class="tab"         onclick="switchTab(this, 'treasurer')">Treasurer</button>
+    <button class="tab"         onclick="switchTab(this, 'pro')">Public Relations Officer</button>
+  </div>
+
+  <!-- Position description (updated by JS) -->
+  <div class="position-desc" id="pos-desc">
+    <div class="position-desc-icon">👑</div>
+    <span>Leads the IT organization, represents students in faculty meetings, and oversees all chapter activities and initiatives.</span>
+  </div>
+
+  <!-- Candidate cards (filled by JS) -->
+  <div class="candidates-grid" id="candidates-grid"></div>
+</section>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════
+     HOW TO VOTE
+     ═══════════════════════════════════════ -->
+<section id="howto">
+  <div class="text-center">
+    <div class="section-eyebrow">Voting Process</div>
+    <h2 class="section-h2">How to <span class="cyan">Vote</span></h2>
+    <p class="section-sub">Follow these four simple steps to cast your vote. The entire process takes less than two minutes.</p>
+  </div>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div class="step-icon">🛡️</div>
+      <div class="step-title">Log In Securely</div>
+      <div class="step-desc">Sign in with your student email and password through our encrypted authentication system.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div class="step-icon">📋</div>
+      <div class="step-title">Review Candidates</div>
+      <div class="step-desc">Browse through all candidates, read their bios and slogans to make an informed decision.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div class="step-icon">✅</div>
+      <div class="step-title">Cast Your Vote</div>
+      <div class="step-desc">Select one candidate per position. Take your time — make sure you are confident in your choices.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">4</div>
+      <div class="step-icon">📤</div>
+      <div class="step-title">Confirm &amp; Submit</div>
+      <div class="step-desc">Review your selections and submit your ballot. You will receive a confirmation of your vote.</div>
+    </div>
+  </div>
+
+  <div class="important-box">
+    ⚠️
+    <span>
+      <strong>Important:</strong> Each student gets
+      <span class="highlight">one vote per candidate per position</span>. Choose wisely!
+    </span>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════
+     FAQ
+     ═══════════════════════════════════════ -->
+<section id="faq">
+  <div class="text-center">
+    <div class="section-eyebrow">Got Questions?</div>
+    <h2 class="section-h2">Frequently <span class="cyan">Asked</span></h2>
+    <p class="section-sub">Everything you need to know about the election process.</p>
+  </div>
+
+  <!-- FAQ items (filled by JS) -->
+  <div class="faq-list" id="faq-list"></div>
+</section>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════
+     CTA BAND
+     ═══════════════════════════════════════ -->
+<div id="cta-section">
+  <div class="trust-row">
+    <div class="trust-badge"><div class="trust-badge-icon enc">🛡️</div> End-to-End Encrypted</div>
+    <div class="trust-badge"><div class="trust-badge-icon anon">🔒</div> Anonymous Ballots</div>
+    <div class="trust-badge"><div class="trust-badge-icon rt">⏱️</div> Real-Time Results</div>
+  </div>
+
+  <h2 class="cta-h2">Ready to Make Your<br><span>Voice Heard?</span></h2>
+  <p class="cta-sub">Every vote shapes the future of our IT community. Log in now and cast your ballot before the voting window closes.</p>
+
+  <div class="cta-buttons">
+    <button class="btn-hero-primary" onclick="openLoginModal()">Log In to Vote →</button>
+    <button class="btn-hero-secondary" onclick="openLiveResultsPage(event)">View Live Results</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nav-logo">
+        <div class="nav-logo-icon">&lt;/&gt;</div>
+        IT<span style="color:var(--cyan)">ELECT</span>
+      </div>
+      <p>The official digital election platform for the <a href="#">IT Student Organization</a>. Secure, transparent, and powered by student voices.</p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <a href="#home">Home</a>
+      <a href="#candidates">Candidates</a>
+      <a href="#howto">How to Vote</a>
+      <a href="#faq">FAQ</a>
+    </div>
+
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <a href="#" onclick="openLiveResultsPage(event)">Live Results</a>
+      <a href="#" onclick="openLoginModal()">Vote Now</a>
+      <a href="#" onclick="openLoginModal()">Log In</a>
+      <a href="#faq">Election Rules</a>
+    </div>
+
+    <div class="footer-col">
+      <h4>Organization</h4>
+      <a href="#">About IT Org</a>
+      <a href="#">Election Committee</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2026 ITElect · IT Student Organization · All rights reserved</div>
+</footer>
+
+<!-- ═══════════════════════════════════════
+     SIGN UP MODAL (new account)
+     ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="signup-overlay" onclick="closeSignUpOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSignUpModal()">✕</button>
+    <div class="modal-logo">
+      <div class="nav-logo-icon">&lt;/&gt;</div>
+      IT<span>ELECT</span>
+    </div>
+    <h2>Create Account</h2>
+    <p class="modal-sub">Use your PHINMA SJC student email to register</p>
+
+    <div class="field-group">
+      <label>Full Name</label>
+      <input type="text" id="signup-name" placeholder="Juan dela Cruz"/>
+    </div>
+    <div class="field-group">
+      <label>PHINMA SJC Email</label>
+      <input type="email" id="signup-email" placeholder="firstname.lastname.sjc@phinmaed.com"/>
+    </div>
+    <div class="field-group">
+      <label>Password</label>
+      <input type="password" id="signup-pass" placeholder="Min. 6 characters"/>
+    </div>
+    <div class="field-group">
+      <label>Confirm Password</label>
+      <input type="password" id="signup-confirm" placeholder="Re-enter your password"/>
+    </div>
+
+    <!-- Error message box -->
+    <div class="modal-error" id="signup-error" style="display:none;"></div>
+
+    <button class="btn-modal" id="signup-btn" onclick="handleSignUp()">Create Account</button>
+    <p class="modal-note">Already have an account? <a href="#" onclick="switchToLogin(event)" style="color:var(--cyan)">Log In</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     LOG IN MODAL (existing account)
+     ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="login-overlay" onclick="closeLoginOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeLoginModal()">✕</button>
+    <div class="modal-logo">
+      <div class="nav-logo-icon">&lt;/&gt;</div>
+      IT<span>ELECT</span>
+    </div>
+    <h2>Welcome Back</h2>
+    <p class="modal-sub">Sign in with your PHINMA SJC student email</p>
+
+    <div class="field-group">
+      <label>PHINMA SJC Email</label>
+      <input type="email" id="modal-email" placeholder="firstname.lastname.sjc@phinmaed.com"/>
+    </div>
+    <div class="field-group">
+      <label>Password</label>
+      <input type="password" id="modal-pass" placeholder="Enter your password"/>
+    </div>
+    <div class="modal-row">
+      <label><input type="checkbox"> Remember me</label>
+      <a href="#">Forgot password?</a>
+    </div>
+
+    <!-- Error message box -->
+    <div class="modal-error" id="login-error" style="display:none;"></div>
+
+    <button class="btn-modal" id="login-btn" onclick="handleLogin()">Log In &amp; Vote</button>
+    <p class="modal-note">No account yet? <a href="#" onclick="switchToSignUp(event)" style="color:var(--cyan)">Sign Up</a></p>
+    <p class="modal-note" style="margin-top:-8px; color:var(--muted);">Demo: use any email and password.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     VOTE PAGE
+     ═══════════════════════════════════════ -->
+<div id="vote-page">
+  <div class="vote-topbar">
+    <button class="vote-back-btn" onclick="closeVotePage()">← Back to Home</button>
+    <div class="nav-logo">
+      <div class="nav-logo-icon">&lt;/&gt;</div>
+      IT<span style="color:var(--cyan)">ELECT</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <span class="vote-progress-text" id="progress-text"><span>0</span> / 5 selected</span>
+      <div class="vote-progress-bar-wrap">
+        <div class="vote-progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vote-inner">
+    <h1>Cast Your Vote</h1>
+    <p>Select one candidate for each position. You can only vote once per candidate per position.</p>
+    <!-- Ballot positions filled by JS -->
+    <div id="ballot-positions"></div>
+    <button class="btn-submit-ballot" id="submit-ballot-btn" onclick="submitBallot()">
+      Review &amp; Submit Ballot →
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     VOTE SUCCESS
+     ═══════════════════════════════════════ -->
+<div id="success-page">
+  <div class="success-icon">✔</div>
+  <h1>Vote Submitted!</h1>
+  <p>Your ballot has been securely recorded. Thank you for participating in shaping the future of IT leadership.</p>
+  <button class="btn-hero-primary" onclick="openLiveResultsPage()">View Live Results →</button>
+</div>
+
+<!-- ═══════════════════════════════════════
+     LIVE RESULTS PAGE
+     ═══════════════════════════════════════ -->
+<div id="results-page">
+  <div class="results-nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">&lt;/&gt;</div>
+      IT<span style="color:var(--cyan)">ELECT</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--green);">
+        <div class="live-dot" style="background:var(--green);"></div> Live
+      </div>
+      <button class="btn-primary" onclick="openLoginModal()">Vote Now</button>
+    </div>
+  </div>
+
+  <div class="results-inner">
+    <div class="results-header">
+      <div class="section-eyebrow" style="margin:0 auto 16px;">
+        <div class="live-dot" style="background:var(--green);"></div> Live Results
+      </div>
+      <h1 class="results-h1">Election <span style="color:var(--green)">Dashboard</span></h1>
+      <p style="color:var(--muted2); text-align:center; margin-top:8px;">
+        Real-time vote counts and percentages across all positions
+      </p>
+    </div>
+
+    <!-- Position cards filled by JS -->
+    <div id="results-positions"></div>
+
+    <!-- Stats row -->
+    <div class="results-stats">
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--cyan)" id="stat-total-votes">0</div>
+        <div class="stat-label">Total Votes</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--pink)">5</div>
+        <div class="stat-label">Positions</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--green)">8</div>
+        <div class="stat-label">Candidates</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--cyan)" id="stat-turnout">0%</div>
+        <div class="stat-label">Voter Turnout</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; padding:24px 0 48px;">
+    <button class="btn-hero-secondary" onclick="closeResultsPage()">← Back to Home</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════ -->
+<script src="script.js"></script>
+</body>
+</html>
