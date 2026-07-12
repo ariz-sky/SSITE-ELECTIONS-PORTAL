@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up – ITElect 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .auth-page {
+      min-height: 100vh; padding: 120px 20px 60px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .auth-glow-1 {
+      position: absolute; top: -160px; right: -160px;
+      width: 560px; height: 560px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,229,255,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .auth-glow-2 {
+      position: absolute; bottom: -180px; left: -180px;
+      width: 480px; height: 480px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,45,120,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .auth-card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 460px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 44px 40px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.45);
+    }
+    .auth-card-title {
+      font-family: var(--font-display); font-size: 26px; font-weight: 900;
+      color: #fff; text-align: center; margin-bottom: 6px;
+    }
+    .auth-card-sub {
+      color: var(--muted2); font-size: 14px; text-align: center; margin-bottom: 28px;
+    }
+    .auth-card-sub a { color: var(--cyan); }
+    .field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .field-group label {
+      font-size: 12px; font-weight: 600; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .field-group input {
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); font-size: 14px; font-family: var(--font-body);
+      outline: none; transition: border-color .2s;
+    }
+    .field-group input:focus { border-color: var(--cyan-dim); }
+    .field-group input::placeholder { color: var(--muted); }
+    .field-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .otp-input {
+      text-align: center; font-size: 24px; letter-spacing: 10px;
+      font-family: var(--font-display); font-weight: 700;
+    }
+    .form-divider { height: 1px; background: var(--border); margin: 8px 0 20px; }
+    .btn-auth {
+      width: 100%; padding: 14px; border-radius: 28px;
+      background: var(--cyan); color: #000; border: none;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: background .2s, transform .15s; margin-top: 4px;
+    }
+    .btn-auth:hover { background: #00ccee; transform: translateY(-1px); }
+    .btn-auth:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .btn-auth-secondary {
+      width: 100%; padding: 12px; border-radius: 28px;
+      background: transparent; color: var(--muted2); border: 1px solid var(--border);
+      font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 10px;
+      transition: all .2s;
+    }
+    .btn-auth-secondary:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+    .auth-error {
+      padding: 11px 14px; border-radius: var(--radius-sm);
+      background: rgba(255,45,120,.1); border: 1px solid rgba(255,45,120,.3);
+      color: #ff6b8a; font-size: 13px; line-height: 1.5;
+      margin-bottom: 16px; display: none;
+    }
+    .auth-success {
+      padding: 11px 14px; border-radius: var(--radius-sm);
+      background: rgba(0,255,136,.08); border: 1px solid rgba(0,255,136,.25);
+      color: var(--green); font-size: 13px;
+      margin-bottom: 16px; display: none; text-align: center;
+    }
+    @media(max-width: 480px) { .auth-card { padding: 32px 24px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">&lt;/&gt;</div>
+    IT<span>ELECT</span>
+  </div>
+  <a href="index.html" class="btn-outline" style="text-decoration:none;">← Back to Home</a>
+</nav>
+
+<div class="auth-page">
+  <div class="auth-glow-1"></div>
+  <div class="auth-glow-2"></div>
+
+  <div class="auth-card">
+
+    <!-- ═══ STEP 1: enter details, request the code ═══ -->
+    <div id="step-details">
+      <div class="auth-card-title">Create Account</div>
+      <p class="auth-card-sub">
+        Already have an account? <a href="login.html">Log In</a>
+      </p>
+
+      <div class="auth-error" id="signup-error"></div>
+
+      <div class="field-group">
+        <label>Student ID Number</label>
+        <input type="text" id="signup-id" placeholder="xx-xxxx-xxxxxx" maxlength="14"/>
+        <span class="field-hint">Format: xx-xxxx-xxxxxx (e.g. 22-1234-567890)</span>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <div class="field-group">
+        <label>PHINMA SJC Email</label>
+        <input type="email" id="signup-email" placeholder="firstname.lastname.sjc@phinmaed.com"/>
+        <span class="field-hint">Must end with .sjc@phinmaed.com — your code is sent here</span>
+      </div>
+
+      <button class="btn-auth" id="send-code-btn" onclick="handleSendCode()">Send Verification Code</button>
+    </div>
+
+    <!-- ═══ STEP 2: enter the 6-digit code ═══ -->
+    <div id="step-otp" style="display:none;">
+      <div class="auth-card-title">Check Your Email</div>
+      <p class="auth-card-sub" id="otp-sent-msg">We sent a 6-digit code to your email.</p>
+
+      <div class="auth-error" id="otp-error"></div>
+      <div class="auth-success" id="otp-success"></div>
+
+      <div class="field-group">
+        <label>Verification Code</label>
+        <input type="text" id="otp-code" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric"/>
+        <span class="field-hint">Enter the 6-digit code from your email</span>
+      </div>
+
+      <button class="btn-auth" id="verify-btn" onclick="handleVerifyAndCreate()">Verify &amp; Create Account</button>
+      <button class="btn-auth-secondary" onclick="handleResend()">Resend Code</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+let pendingStudentId = '';
+let pendingEmail     = '';
+
+document.getElementById('signup-id').addEventListener('input', function() {
+  let val = this.value.replace(/\D/g, '');
+  let formatted = '';
+  if (val.length > 0) formatted += val.substring(0, 2);
+  if (val.length > 2) formatted += '-' + val.substring(2, 6);
+  if (val.length > 6) formatted += '-' + val.substring(6, 12);
+  this.value = formatted;
+});
+
+document.getElementById('otp-code').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 6);
+});
+
+function validateStudentId(id) { return /^\d{2}-\d{4}-\d{6}$/.test(id); }
+function validateEmail(email)  { return email.endsWith('.sjc@phinmaed.com'); }
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideError(id) { document.getElementById(id).style.display = 'none'; }
+
+/* ── STEP 1: validate + check for duplicates + send OTP ── */
+async function handleSendCode() {
+  hideError('signup-error');
+
+  const studentId = document.getElementById('signup-id').value.trim();
+  const email     = document.getElementById('signup-email').value.trim().toLowerCase();
+
+  if (!studentId || !email) { showError('signup-error', 'Please fill in all fields.'); return; }
+  if (!validateStudentId(studentId)) {
+    showError('signup-error', 'Invalid Student ID format. Must be xx-xxxx-xxxxxx.'); return;
+  }
+  if (!validateEmail(email)) {
+    showError('signup-error', 'Email must end with .sjc@phinmaed.com.'); return;
+  }
+
+  const btn = document.getElementById('send-code-btn');
+  btn.disabled = true; btn.textContent = 'Checking...';
+
+  // Reject if this Student ID is already registered
+  const { data: existing, error: checkErr } = await supabaseClient
+    .from('profiles')
+    .select('student_id')
+    .eq('student_id', studentId)
+    .maybeSingle();
+
+  if (checkErr) {
+    showError('signup-error', 'Something went wrong checking your Student ID. Please try again.');
+    btn.disabled = false; btn.textContent = 'Send Verification Code';
+    return;
+  }
+  if (existing) {
+    showError('signup-error', 'This Student ID is already registered. Please log in instead.');
+    btn.disabled = false; btn.textContent = 'Send Verification Code';
+    return;
+  }
+
+  btn.textContent = 'Sending Code...';
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: email
+});
+
+  btn.disabled = false; btn.textContent = 'Send Verification Code';
+
+  if (error) {
+    showError('signup-error', error.message || 'Could not send the code. Please try again.');
+    return;
+  }
+
+  pendingStudentId = studentId;
+  pendingEmail     = email;
+  document.getElementById('otp-sent-msg').textContent = `We sent a 6-digit code to ${email}.`;
+  document.getElementById('step-details').style.display = 'none';
+  document.getElementById('step-otp').style.display     = '';
+}
+
+/* ── STEP 2: verify the code, then create the profile row ── */
+async function handleVerifyAndCreate() {
+  hideError('otp-error');
+  document.getElementById('otp-success').style.display = 'none';
+
+  const code = document.getElementById('otp-code').value.trim();
+  if (code.length !== 6) { showError('otp-error', 'Enter the 6-digit code from your email.'); return; }
+
+  const btn = document.getElementById('verify-btn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+
+  const { data, error } = await supabaseClient.auth.verifyOtp({
+    email: pendingEmail,
+    token: code,
+    type: 'email'
+  });
+
+  if (error) {
+    showError('otp-error', error.message || 'Invalid or expired code. Please try again.');
+    btn.disabled = false; btn.textContent = 'Verify & Create Account';
+    return;
+  }
+
+  // Session is now active — create this student's profile row
+  const userId = data.user.id;
+  const { error: profileErr } = await supabaseClient
+    .from('profiles')
+    .insert({ id: userId, student_id: pendingStudentId, is_admin: false, voted: false });
+
+  btn.disabled = false; btn.textContent = 'Verify & Create Account';
+
+  if (profileErr) {
+    showError('otp-error', 'Verified, but could not finish creating your profile: ' + profileErr.message);
+    return;
+  }
+
+  document.getElementById('otp-success').style.display = 'block';
+  document.getElementById('otp-success').textContent = '✅ Account created! Redirecting to your ballot...';
+  setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+}
+
+async function handleResend() {
+  hideError('otp-error');
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: pendingEmail,
+    options: { shouldCreateUser: true }
+  });
+  if (error) { showError('otp-error', error.message || 'Could not resend the code.'); return; }
+  document.getElementById('otp-success').style.display = 'block';
+  document.getElementById('otp-success').textContent = '📨 A new code has been sent.';
+}
+</script>
+</body>
+</html>

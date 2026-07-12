@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Log In – ITElect 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .auth-page {
+      min-height: 100vh; padding: 120px 20px 60px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .auth-glow-1 {
+      position: absolute; top: -160px; right: -160px;
+      width: 560px; height: 560px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,229,255,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .auth-glow-2 {
+      position: absolute; bottom: -180px; left: -180px;
+      width: 480px; height: 480px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,45,120,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .auth-card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 440px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 44px 40px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.45);
+    }
+    .auth-card-title {
+      font-family: var(--font-display); font-size: 26px; font-weight: 900;
+      color: #fff; text-align: center; margin-bottom: 6px;
+    }
+    .auth-card-sub {
+      color: var(--muted2); font-size: 14px; text-align: center; margin-bottom: 28px;
+    }
+    .auth-card-sub a { color: var(--cyan); }
+    .field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .field-group label {
+      font-size: 12px; font-weight: 600; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .field-group input {
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); font-size: 14px; font-family: var(--font-body);
+      outline: none; transition: border-color .2s;
+    }
+    .field-group input:focus { border-color: var(--cyan-dim); }
+    .field-group input::placeholder { color: var(--muted); }
+    .field-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .otp-input {
+      text-align: center; font-size: 24px; letter-spacing: 10px;
+      font-family: var(--font-display); font-weight: 700;
+    }
+    .btn-auth {
+      width: 100%; padding: 14px; border-radius: 28px;
+      background: var(--cyan); color: #000; border: none;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn-auth:hover { background: #00ccee; transform: translateY(-1px); }
+    .btn-auth:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .btn-auth-secondary {
+      width: 100%; padding: 12px; border-radius: 28px;
+      background: transparent; color: var(--muted2); border: 1px solid var(--border);
+      font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 10px;
+      transition: all .2s;
+    }
+    .btn-auth-secondary:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+    .auth-error {
+      padding: 11px 14px; border-radius: var(--radius-sm);
+      background: rgba(255,45,120,.1); border: 1px solid rgba(255,45,120,.3);
+      color: #ff6b8a; font-size: 13px; line-height: 1.5;
+      margin-bottom: 16px; display: none;
+    }
+    .auth-success {
+      padding: 11px 14px; border-radius: var(--radius-sm);
+      background: rgba(0,255,136,.08); border: 1px solid rgba(0,255,136,.25);
+      color: var(--green); font-size: 13px;
+      margin-bottom: 16px; display: none; text-align: center;
+    }
+    .auth-tabs {
+      display: flex; gap: 6px; padding: 4px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 30px; margin-bottom: 28px;
+    }
+    .auth-tab {
+      flex: 1; padding: 10px; border: none; border-radius: 26px;
+      background: transparent; color: var(--muted2);
+      font-size: 13px; font-weight: 700; letter-spacing: .3px;
+      cursor: pointer; transition: background .2s, color .2s;
+    }
+    .auth-tab.active { background: var(--cyan); color: #000; }
+    @media(max-width: 480px) { .auth-card { padding: 32px 24px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">&lt;/&gt;</div>
+    IT<span>ELECT</span>
+  </div>
+  <a href="index.html" class="btn-outline" style="text-decoration:none;">← Back to Home</a>
+</nav>
+
+<div class="auth-page">
+  <div class="auth-glow-1"></div>
+  <div class="auth-glow-2"></div>
+
+  <div class="auth-card">
+
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab active" id="tab-student" onclick="switchAuthTab('student')">Student</button>
+      <button type="button" class="auth-tab" id="tab-admin" onclick="switchAuthTab('admin')">Admin</button>
+    </div>
+
+    <!-- ═══ STUDENT — STEP 1: enter email, send code ═══ -->
+    <div id="student-step-email">
+      <div class="auth-card-title">Welcome Back</div>
+      <p class="auth-card-sub">
+        No account yet? <a href="signup.html">Sign Up</a>
+      </p>
+
+      <div class="auth-error" id="login-error"></div>
+
+      <div class="field-group">
+        <label>PHINMA SJC Email</label>
+        <input type="email" id="login-email" placeholder="firstname.lastname.sjc@phinmaed.com"/>
+        <span class="field-hint">The email you signed up with</span>
+      </div>
+
+      <button class="btn-auth" id="send-login-code-btn" onclick="handleSendLoginCode()">Send Verification Code</button>
+    </div>
+
+    <!-- ═══ STUDENT — STEP 2: enter code ═══ -->
+    <div id="student-step-otp" style="display:none;">
+      <div class="auth-card-title">Check Your Email</div>
+      <p class="auth-card-sub" id="login-otp-sent-msg">We sent a 6-digit code to your email.</p>
+
+      <div class="auth-error" id="login-otp-error"></div>
+      <div class="auth-success" id="login-otp-success"></div>
+
+      <div class="field-group">
+        <label>Verification Code</label>
+        <input type="text" id="login-otp-code" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric"/>
+      </div>
+
+      <button class="btn-auth" id="verify-login-btn" onclick="handleVerifyLogin()">Verify &amp; Log In</button>
+      <button class="btn-auth-secondary" onclick="handleResendLogin()">Resend Code</button>
+    </div>
+
+    <!-- ═══ ADMIN — STEP 1: enter email, send code ═══ -->
+    <div id="admin-step-email" style="display:none;">
+      <div class="auth-card-title">Admin Access</div>
+      <p class="auth-card-sub">Election Committee use only.</p>
+
+      <div class="auth-error" id="admin-login-error"></div>
+
+      <div class="field-group">
+        <label>Admin Email</label>
+        <input type="email" id="admin-email" placeholder="Enter admin email"/>
+      </div>
+
+      <button class="btn-auth" id="send-admin-code-btn" onclick="handleSendAdminCode()">Send Verification Code</button>
+    </div>
+
+    <!-- ═══ ADMIN — STEP 2: enter code ═══ -->
+    <div id="admin-step-otp" style="display:none;">
+      <div class="auth-card-title">Check Your Email</div>
+      <p class="auth-card-sub" id="admin-otp-sent-msg">We sent a 6-digit code to your email.</p>
+
+      <div class="auth-error" id="admin-otp-error"></div>
+
+      <div class="field-group">
+        <label>Verification Code</label>
+        <input type="text" id="admin-otp-code" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric"/>
+      </div>
+
+      <button class="btn-auth" id="verify-admin-btn" onclick="handleVerifyAdmin()">Verify &amp; Log In</button>
+      <button class="btn-auth-secondary" onclick="handleResendAdmin()">Resend Code</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+/* ── Tab switching ── */
+function switchAuthTab(tab) {
+  const isStudent = tab === 'student';
+  document.getElementById('tab-student').classList.toggle('active', isStudent);
+  document.getElementById('tab-admin').classList.toggle('active', !isStudent);
+  document.getElementById('student-step-email').style.display = isStudent ? '' : 'none';
+  document.getElementById('student-step-otp').style.display   = 'none';
+  document.getElementById('admin-step-email').style.display   = isStudent ? 'none' : '';
+  document.getElementById('admin-step-otp').style.display     = 'none';
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideError(id) { document.getElementById(id).style.display = 'none'; }
+
+document.getElementById('login-otp-code').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 6);
+});
+document.getElementById('admin-otp-code').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 6);
+});
+
+/* ═══ STUDENT LOGIN ═══ */
+let pendingLoginEmail = '';
+
+async function handleSendLoginCode() {
+  hideError('login-error');
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  if (!email) { showError('login-error', 'Please enter your email.'); return; }
+
+  const btn = document.getElementById('send-login-code-btn');
+  btn.disabled = true; btn.textContent = 'Sending Code...';
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false } // don't create new accounts from the login page
+  });
+
+  btn.disabled = false; btn.textContent = 'Send Verification Code';
+
+  if (error) {
+    showError('login-error', error.message || 'Could not send the code. Make sure you have signed up first.');
+    return;
+  }
+
+  pendingLoginEmail = email;
+  document.getElementById('login-otp-sent-msg').textContent = `We sent a 6-digit code to ${email}.`;
+  document.getElementById('student-step-email').style.display = 'none';
+  document.getElementById('student-step-otp').style.display   = '';
+}
+
+async function handleVerifyLogin() {
+  hideError('login-otp-error');
+  document.getElementById('login-otp-success').style.display = 'none';
+
+  const code = document.getElementById('login-otp-code').value.trim();
+  if (code.length !== 6) { showError('login-otp-error', 'Enter the 6-digit code.'); return; }
+
+  const btn = document.getElementById('verify-login-btn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+
+  const { error } = await supabaseClient.auth.verifyOtp({
+    email: pendingLoginEmail, token: code, type: 'email'
+  });
+
+  btn.disabled = false; btn.textContent = 'Verify & Log In';
+
+  if (error) {
+    showError('login-otp-error', error.message || 'Invalid or expired code.');
+    return;
+  }
+
+  window.location.href = 'index.html';
+}
+
+async function handleResendLogin() {
+  hideError('login-otp-error');
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: pendingLoginEmail, options: { shouldCreateUser: false }
+  });
+  if (error) { showError('login-otp-error', error.message); return; }
+  document.getElementById('login-otp-success').style.display = 'block';
+  document.getElementById('login-otp-success').textContent = '📨 A new code has been sent.';
+}
+
+/* ═══ ADMIN LOGIN — same OTP mechanism, gated by is_admin flag ═══ */
+let pendingAdminEmail = '';
+
+async function handleSendAdminCode() {
+  hideError('admin-login-error');
+  const email = document.getElementById('admin-email').value.trim().toLowerCase();
+  if (!email) { showError('admin-login-error', 'Please enter the admin email.'); return; }
+
+  const btn = document.getElementById('send-admin-code-btn');
+  btn.disabled = true; btn.textContent = 'Sending Code...';
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email, options: { shouldCreateUser: false }
+  });
+
+  btn.disabled = false; btn.textContent = 'Send Verification Code';
+
+  if (error) {
+    showError('admin-login-error', error.message || 'Could not send the code.');
+    return;
+  }
+
+  pendingAdminEmail = email;
+  document.getElementById('admin-otp-sent-msg').textContent = `We sent a 6-digit code to ${email}.`;
+  document.getElementById('admin-step-email').style.display = 'none';
+  document.getElementById('admin-step-otp').style.display   = '';
+}
+
+async function handleVerifyAdmin() {
+  hideError('admin-otp-error');
+  const code = document.getElementById('admin-otp-code').value.trim();
+  if (code.length !== 6) { showError('admin-otp-error', 'Enter the 6-digit code.'); return; }
+
+  const btn = document.getElementById('verify-admin-btn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+
+  const { data, error } = await supabaseClient.auth.verifyOtp({
+    email: pendingAdminEmail, token: code, type: 'email'
+  });
+
+  if (error) {
+    showError('admin-otp-error', error.message || 'Invalid or expired code.');
+    btn.disabled = false; btn.textContent = 'Verify & Log In';
+    return;
+  }
+
+  // Verified — now confirm this account is actually flagged as admin
+  const { data: profile, error: profileErr } = await supabaseClient
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', data.user.id)
+    .single();
+
+  btn.disabled = false; btn.textContent = 'Verify & Log In';
+
+  if (profileErr || !profile || !profile.is_admin) {
+    showError('admin-otp-error', 'This account is not authorized as an admin.');
+    await supabaseClient.auth.signOut();
+    return;
+  }
+
+  window.location.href = 'admin.html';
+}
+
+async function handleResendAdmin() {
+  hideError('admin-otp-error');
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: pendingAdminEmail, options: { shouldCreateUser: false }
+  });
+  if (error) showError('admin-otp-error', error.message);
+}
+</script>
+</body>
+</html>

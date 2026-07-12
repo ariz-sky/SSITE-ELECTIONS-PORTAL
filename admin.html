@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel – ITElect 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     ADMIN NAV
+     ═══════════════════════════════════════ -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">&lt;/&gt;</div>
+    IT<span>ELECT</span>
+    <span class="admin-badge">Admin</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <span style="font-size:13px; color:var(--muted2);" id="admin-email-display">👤 admin</span>
+    <button class="btn-outline" onclick="handleAdminLogout()">Log Out</button>
+  </div>
+</nav>
+
+<div class="admin-shell">
+
+  <div class="admin-head">
+    <h1>Election Command Center</h1>
+    <p>Monitor live results and manage the list of nominees running in the 2026 election.</p>
+  </div>
+
+  <!-- Sub-nav -->
+  <div class="admin-subnav">
+    <button class="admin-subnav-btn active" id="subnav-results" onclick="showAdminView('results')">📊 Results</button>
+    <button class="admin-subnav-btn" id="subnav-manage" onclick="showAdminView('manage')">🗳️ Manage Nominees</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       RESULTS VIEW
+       ═══════════════════════════════════════ -->
+  <div class="admin-view open" id="admin-view-results">
+
+    <div class="admin-stats-grid">
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--cyan)" id="astat-votes">0</div>
+        <div class="stat-label">Total Votes Cast</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--pink)" id="astat-nominees">0</div>
+        <div class="stat-label">Nominees</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--green)" id="astat-accounts">0</div>
+        <div class="stat-label">Registered Students</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--cyan)" id="astat-turnout">0%</div>
+        <div class="stat-label">Voter Turnout</div>
+      </div>
+    </div>
+
+    <div class="admin-chart-card">
+      <div class="admin-chart-title">Ranking</div>
+      <div class="admin-chart-sub">All nominees ordered by votes received</div>
+      <div class="admin-ranked-list" id="admin-ranked-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MANAGE NOMINEES VIEW
+       ═══════════════════════════════════════ -->
+  <div class="admin-view" id="admin-view-manage">
+
+    <div class="admin-manual-add">
+      <input type="text" id="manual-nominee-name" placeholder="Or add one nominee manually — full name"/>
+      <input type="file" id="manual-nominee-photo" class="admin-photo-input" accept="image/*" onchange="handleManualPhotoSelect(event)"/>
+      <label class="admin-file-label" for="manual-nominee-photo" style="padding:12px 18px;">📷 <span id="manual-photo-label">Add Photo</span></label>
+      <button onclick="addManualNominee()">+ Add Nominee</button>
+    </div>
+
+    <div class="admin-chart-title" style="margin-bottom:16px;">Current Nominees (<span id="nominee-total-count">0</span>)</div>
+    <div class="admin-nominee-list" id="admin-nominee-list"></div>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+let nominees = [];
+let currentAdminId = null;
+
+/* ── Auth guard — must be logged in AND flagged is_admin ── */
+async function guardAdmin() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return false; }
+
+  const { data: profile, error } = await supabaseClient
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', session.user.id)
+    .single();
+
+  if (error || !profile || !profile.is_admin) {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'login.html';
+    return false;
+  }
+
+  currentAdminId = session.user.id;
+  document.getElementById('admin-email-display').textContent = '👤 ' + session.user.email;
+  return true;
+}
+
+async function handleAdminLogout() {
+  await supabaseClient.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+/* ── Nominees data (from Supabase) ── */
+async function loadNominees() {
+  const { data, error } = await supabaseClient
+    .from('nominees')
+    .select('*')
+    .order('created_at', { ascending: true });
+  nominees = error ? [] : (data || []);
+}
+
+function makeNomineeId() {
+  return 'n' + Date.now().toString(36) + Math.floor(Math.random() * 1000);
+}
+
+/* Upload a File to the public 'nominee-photos' Storage bucket, return its public URL */
+async function uploadPhotoToStorage(file, nomineeId) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${nomineeId}-${Date.now()}.${ext}`;
+
+  const { error: uploadErr } = await supabaseClient
+    .storage
+    .from('nominee-photos')
+    .upload(path, file, { upsert: true });
+
+  if (uploadErr) throw uploadErr;
+
+  const { data } = supabaseClient.storage.from('nominee-photos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+/* ── Sub-nav view switching ── */
+function showAdminView(view) {
+  document.getElementById('admin-view-results').classList.toggle('open', view === 'results');
+  document.getElementById('admin-view-manage').classList.toggle('open', view === 'manage');
+  document.getElementById('subnav-results').classList.toggle('active', view === 'results');
+  document.getElementById('subnav-manage').classList.toggle('active', view === 'manage');
+  if (view === 'results') renderResults();
+  if (view === 'manage')  renderManageList();
+}
+
+/* ═══════════════════════════════════════════
+   RESULTS — stats + ranked list
+   ═══════════════════════════════════════════ */
+async function renderResults() {
+  await loadNominees();
+
+  const [countsRes, statsRes] = await Promise.all([
+    supabaseClient.from('vote_counts').select('*'),
+    supabaseClient.from('election_stats').select('*').single()
+  ]);
+
+  const counts = {};
+  (countsRes.data || []).forEach(row => { counts[row.nominee_id] = row.votes; });
+  nominees.forEach(n => { if (!(n.id in counts)) counts[n.id] = 0; });
+
+  const stats = statsRes.data || { total_students: 0, voted_count: 0, total_votes: 0 };
+  const turnout = stats.total_students > 0 ? Math.round((stats.voted_count / stats.total_students) * 100) : 0;
+
+  document.getElementById('astat-votes').textContent    = stats.total_votes;
+  document.getElementById('astat-nominees').textContent = nominees.length;
+  document.getElementById('astat-accounts').textContent = stats.total_students;
+  document.getElementById('astat-turnout').textContent  = turnout + '%';
+
+  renderRankedList(counts, stats.total_votes);
+}
+
+function renderRankedList(counts, totalVotes) {
+  const list = document.getElementById('admin-ranked-list');
+  const maxVotes = Math.max(1, ...nominees.map(nm => counts[nm.id] || 0));
+
+  const sorted = nominees.slice().sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0));
+
+  list.innerHTML = sorted.map((nm, i) => {
+    const v = counts[nm.id] || 0;
+    const pct = totalVotes > 0 ? Math.round((v / totalVotes) * 100) : 0;
+    const barPct = maxVotes > 0 ? Math.round((v / maxVotes) * 100) : 0;
+    const leading = v > 0 && v === maxVotes;
+    return `
+      <div class="admin-ranked-row${leading ? ' leading' : ''}">
+        <div class="admin-rank-num">${i + 1}</div>
+        <div class="admin-ranked-name">${nm.name}</div>
+        <div class="admin-ranked-bar-track"><div class="admin-ranked-bar-fill" style="width:0%;" data-w="${barPct}"></div></div>
+        <div class="admin-ranked-votes">${v} (${pct}%)</div>
+      </div>
+    `;
+  }).join('');
+
+  setTimeout(() => {
+    document.querySelectorAll('.admin-ranked-bar-fill[data-w]').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 100);
+}
+
+/* ═══════════════════════════════════════════
+   MANAGE NOMINEES — add manually, edit name, change photo, delete
+   ═══════════════════════════════════════════ */
+let pendingManualPhoto = null;
+
+function handleManualPhotoSelect(e) {
+  const file = e.target.files[0];
+  pendingManualPhoto = file || null;
+  document.getElementById('manual-photo-label').textContent = file ? '✓ Photo Selected' : 'Add Photo';
+}
+
+async function addManualNominee() {
+  const input = document.getElementById('manual-nominee-name');
+  const name = input.value.trim();
+  if (!name) return;
+
+  if (nominees.some(n => n.name.toLowerCase() === name.toLowerCase())) {
+    alert('A nominee with that name already exists.');
+    return;
+  }
+
+  const id = makeNomineeId();
+  let photoUrl = '';
+
+  if (pendingManualPhoto) {
+    try {
+      photoUrl = await uploadPhotoToStorage(pendingManualPhoto, id);
+    } catch (err) {
+      alert('Nominee will be added, but the photo failed to upload: ' + err.message);
+    }
+  }
+
+  const { error } = await supabaseClient
+    .from('nominees')
+    .insert({ id, name, slogan: 'IT Student Organization Nominee', photo_url: photoUrl });
+
+  if (error) {
+    alert('Could not add nominee: ' + error.message);
+    return;
+  }
+
+  input.value = '';
+  pendingManualPhoto = null;
+  document.getElementById('manual-nominee-photo').value = '';
+  document.getElementById('manual-photo-label').textContent = 'Add Photo';
+  renderManageList();
+}
+
+async function renderManageList() {
+  await loadNominees();
+  document.getElementById('nominee-total-count').textContent = nominees.length;
+
+  const list = document.getElementById('admin-nominee-list');
+  if (nominees.length === 0) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:13px;">No nominees yet — add some above.</p>';
+    return;
+  }
+
+  list.innerHTML = nominees.map(n => `
+    <div class="admin-nominee-row" id="row-${n.id}">
+      <div class="admin-nominee-left" style="flex:1; min-width:0;">
+        <div class="admin-nominee-avatar">${n.photo_url ? `<img src="${n.photo_url}" alt="${n.name}"/>` : '👤'}</div>
+        <div id="display-${n.id}" style="min-width:0;">
+          <div class="admin-nominee-name-display">${n.name}</div>
+          <div class="admin-nominee-slogan-display">${n.slogan || ''}</div>
+        </div>
+      </div>
+      <div class="admin-nominee-actions">
+        <input type="file" id="photo-input-${n.id}" class="admin-photo-input" accept="image/*" onchange="handlePhotoReplace('${n.id}', event)"/>
+        <button class="icon-btn" title="Change photo" onclick="document.getElementById('photo-input-${n.id}').click()">📷</button>
+        <button class="icon-btn" title="Edit name" onclick="startEditNominee('${n.id}')">✎</button>
+        <button class="icon-btn danger" title="Remove nominee" onclick="deleteNominee('${n.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function handlePhotoReplace(id, e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  let photoUrl;
+  try {
+    photoUrl = await uploadPhotoToStorage(file, id);
+  } catch (err) {
+    alert('Photo upload failed: ' + err.message);
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from('nominees')
+    .update({ photo_url: photoUrl })
+    .eq('id', id);
+
+  if (error) { alert('Could not save photo: ' + error.message); return; }
+  renderManageList();
+}
+
+function startEditNominee(id) {
+  const n = nominees.find(x => x.id === id);
+  if (!n) return;
+  const displayEl = document.getElementById(`display-${id}`);
+  displayEl.innerHTML = `<input type="text" class="admin-edit-input" id="edit-input-${id}" value="${n.name.replace(/"/g, '&quot;')}"/>`;
+
+  const row = document.getElementById(`row-${id}`);
+  row.querySelector('.admin-nominee-actions').innerHTML = `
+    <button class="icon-btn confirm" title="Save" onclick="saveEditNominee('${id}')">✓</button>
+    <button class="icon-btn" title="Cancel" onclick="renderManageList()">✕</button>
+  `;
+  document.getElementById(`edit-input-${id}`).focus();
+}
+
+async function saveEditNominee(id) {
+  const input = document.getElementById(`edit-input-${id}`);
+  const newName = input.value.trim();
+  if (!newName) { alert('Name cannot be empty.'); return; }
+
+  const { error } = await supabaseClient
+    .from('nominees')
+    .update({ name: newName })
+    .eq('id', id);
+
+  if (error) { alert('Could not save name: ' + error.message); return; }
+  renderManageList();
+}
+
+async function deleteNominee(id) {
+  const n = nominees.find(x => x.id === id);
+  if (!n) return;
+  if (!confirm(`Remove "${n.name}" from the nominee list? This cannot be undone.`)) return;
+
+  const { error } = await supabaseClient.from('nominees').delete().eq('id', id);
+  if (error) { alert('Could not remove nominee: ' + error.message); return; }
+  renderManageList();
+}
+
+/* ── Init ── */
+(async function init() {
+  const ok = await guardAdmin();
+  if (!ok) return;
+  renderResults();
+})();
+</script>
+</body>
+</html>
