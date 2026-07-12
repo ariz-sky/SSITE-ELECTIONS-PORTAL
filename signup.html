@@ -217,7 +217,7 @@ async function handleSendCode() {
 
   btn.textContent = 'Sending Code...';
 
-  const { data, error } = await supabase.auth.signInWithOtp({
+  const { data, error } = await supabaseClient.auth.signInWithOtp({
   email: email,
   options: {
     shouldCreateUser: true
