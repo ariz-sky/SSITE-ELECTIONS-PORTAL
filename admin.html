@@ -75,7 +75,8 @@
   <div class="admin-view" id="admin-view-manage">
 
     <div class="admin-manual-add">
-      <input type="text" id="manual-nominee-name" placeholder="Or add one nominee manually — full name"/>
+      <input type="text" id="manual-nominee-name" placeholder="Full name"/>
+      <input type="text" id="manual-nominee-section" placeholder="Section (e.g. BSIT-3A)"/>
       <input type="file" id="manual-nominee-photo" class="admin-photo-input" accept="image/*" onchange="handleManualPhotoSelect(event)"/>
       <label class="admin-file-label" for="manual-nominee-photo" style="padding:12px 18px;">📷 <span id="manual-photo-label">Add Photo</span></label>
       <button onclick="addManualNominee()">+ Add Nominee</button>
@@ -227,7 +228,9 @@ function handleManualPhotoSelect(e) {
 
 async function addManualNominee() {
   const input = document.getElementById('manual-nominee-name');
+  const sectionInput = document.getElementById('manual-nominee-section');
   const name = input.value.trim();
+  const section = sectionInput.value.trim();
   if (!name) return;
 
   if (nominees.some(n => n.name.toLowerCase() === name.toLowerCase())) {
@@ -248,7 +251,7 @@ async function addManualNominee() {
 
   const { error } = await supabaseClient
     .from('nominees')
-    .insert({ id, name, slogan: 'IT Student Organization Nominee', photo_url: photoUrl });
+    .insert({ id, name, slogan: section, photo_url: photoUrl });
 
   if (error) {
     alert('Could not add nominee: ' + error.message);
@@ -256,6 +259,7 @@ async function addManualNominee() {
   }
 
   input.value = '';
+  sectionInput.value = '';
   pendingManualPhoto = null;
   document.getElementById('manual-nominee-photo').value = '';
   document.getElementById('manual-photo-label').textContent = 'Add Photo';
@@ -278,13 +282,13 @@ async function renderManageList() {
         <div class="admin-nominee-avatar">${n.photo_url ? `<img src="${n.photo_url}" alt="${n.name}"/>` : '👤'}</div>
         <div id="display-${n.id}" style="min-width:0;">
           <div class="admin-nominee-name-display">${n.name}</div>
-          <div class="admin-nominee-slogan-display">${n.slogan || ''}</div>
+          <div class="admin-nominee-slogan-display">${n.slogan || 'No section set'}</div>
         </div>
       </div>
       <div class="admin-nominee-actions">
         <input type="file" id="photo-input-${n.id}" class="admin-photo-input" accept="image/*" onchange="handlePhotoReplace('${n.id}', event)"/>
         <button class="icon-btn" title="Change photo" onclick="document.getElementById('photo-input-${n.id}').click()">📷</button>
-        <button class="icon-btn" title="Edit name" onclick="startEditNominee('${n.id}')">✎</button>
+        <button class="icon-btn" title="Edit name & section" onclick="startEditNominee('${n.id}')">✎</button>
         <button class="icon-btn danger" title="Remove nominee" onclick="deleteNominee('${n.id}')">🗑</button>
       </div>
     </div>
@@ -316,7 +320,10 @@ function startEditNominee(id) {
   const n = nominees.find(x => x.id === id);
   if (!n) return;
   const displayEl = document.getElementById(`display-${id}`);
-  displayEl.innerHTML = `<input type="text" class="admin-edit-input" id="edit-input-${id}" value="${n.name.replace(/"/g, '&quot;')}"/>`;
+  displayEl.innerHTML = `
+    <input type="text" class="admin-edit-input" id="edit-input-${id}" value="${n.name.replace(/"/g, '&quot;')}" placeholder="Full name" style="margin-bottom:6px;"/>
+    <input type="text" class="admin-edit-input" id="edit-section-${id}" value="${(n.slogan || '').replace(/"/g, '&quot;')}" placeholder="Section (e.g. BSIT-3A)"/>
+  `;
 
   const row = document.getElementById(`row-${id}`);
   row.querySelector('.admin-nominee-actions').innerHTML = `
@@ -328,15 +335,17 @@ function startEditNominee(id) {
 
 async function saveEditNominee(id) {
   const input = document.getElementById(`edit-input-${id}`);
+  const sectionInput = document.getElementById(`edit-section-${id}`);
   const newName = input.value.trim();
+  const newSection = sectionInput.value.trim();
   if (!newName) { alert('Name cannot be empty.'); return; }
 
   const { error } = await supabaseClient
     .from('nominees')
-    .update({ name: newName })
+    .update({ name: newName, slogan: newSection })
     .eq('id', id);
 
-  if (error) { alert('Could not save name: ' + error.message); return; }
+  if (error) { alert('Could not save changes: ' + error.message); return; }
   renderManageList();
 }
 

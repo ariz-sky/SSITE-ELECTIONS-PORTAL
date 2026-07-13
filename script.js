@@ -46,8 +46,12 @@ const faqs = [
     a: 'Yes, your identity is separated from your ballot after authentication. The system only records that you voted, not who you voted for, ensuring full anonymity.'
   },
   {
-    q: "I didn't get my verification code. What should I do?",
-    a: 'Check your spam folder first. If it still hasn\'t arrived after a minute, use the "Resend Code" button on the sign-in page. Contact the Election Committee if you still have trouble.'
+    q: "I didn't get my verification code during sign up. What should I do?",
+    a: 'Check your spam folder first. If it still hasn\'t arrived after about 30 seconds, use the "Resend Code" button on the sign-up page. Contact the Election Committee if you still have trouble.'
+  },
+  {
+    q: 'I forgot my password. What should I do?',
+    a: 'Contact the Election Committee with your Student ID to have your password reset. Verification codes are only sent during account creation, not for everyday logins.'
   }
 ];
 
@@ -239,7 +243,7 @@ function renderNominees(justVotedCount) {
         <p>Your ballot has already been recorded. Voting again isn't allowed, to keep the election fair.</p>
         <button class="btn-hero-primary" onclick="showResultsView()">View Live Results →</button>
       `;
-    banner.style.display = 'block';
+    banner.style.display = 'flex';
     wrap.style.display   = 'none';
     return;
   }
@@ -247,11 +251,14 @@ function renderNominees(justVotedCount) {
   wrap.style.display    = '';
 
   grid.innerHTML = nominees.map(n => `
-    <div class="nominee-card" id="nom-${n.id}" onclick="toggleNominee('${n.id}')" title="${n.slogan}">
-      <div class="nominee-photo">${n.photo_url ? `<img src="${n.photo_url}" alt="${n.name}"/>` : '👤'}</div>
+    <div class="nominee-card" id="nom-${n.id}" onclick="toggleNominee('${n.id}')" title="${n.slogan || ''}">
+      <div class="nominee-photo">
+        ${n.photo_url ? `<img src="${n.photo_url}" alt="${n.name}"/>` : '👤'}
+        <div class="nominee-check">✓</div>
+      </div>
       <div class="nominee-name-row">
         <div class="nominee-name">${n.name}</div>
-        <div class="nominee-check">✓</div>
+        ${n.slogan ? `<span class="nominee-slogan-badge">${n.slogan}</span>` : ''}
       </div>
     </div>
   `).join('');
@@ -330,6 +337,12 @@ async function submitBallot() {
 /* ─────────────────────────────────────────
    LIVE RESULTS VIEW
    ───────────────────────────────────────── */
+function photoBlock(n, className) {
+  return n.photo_url
+    ? `<img src="${n.photo_url}" alt="${n.name}"/>`
+    : `<span class="results-photo-fallback">👤</span>`;
+}
+
 async function renderResultsView() {
   const container = document.getElementById('results-positions');
   container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px 0;">Loading results…</p>';
@@ -347,25 +360,30 @@ async function renderResultsView() {
   const totalVotes = stats.total_votes;
   const maxVotes = Math.max(1, ...Object.values(countMap));
 
-  const rows = nominees
+  const ranked = nominees
     .slice()
-    .sort((a, b) => (countMap[b.id] || 0) - (countMap[a.id] || 0))
-    .map(n => {
+    .sort((a, b) => (countMap[b.id] || 0) - (countMap[a.id] || 0));
+
+  /* ── Full ranked list ── */
+  const rows = ranked.map((n, i) => {
       const v   = countMap[n.id] || 0;
       const pct = totalVotes > 0 ? Math.round((v / totalVotes) * 100) : 0;
       const leading = v > 0 && v === maxVotes;
       const color = leading ? '#00e5ff' : '#ff2d78';
       return `
-        <div class="results-candidate-row">
+        <div class="results-candidate-card${leading ? ' leading' : ''}">
           <div class="results-candidate-info">
             <div class="results-candidate-left">
-              <div class="results-avatar">${n.photo_url ? `<img src="${n.photo_url}" alt="${n.name}"/>` : '👤'}</div>
-              <span class="results-cname">${n.name}</span>
-              ${leading ? '<span class="results-leading">Leading</span>' : ''}
+              <div class="results-rank-num">${i + 1}</div>
+              <div class="results-avatar">${photoBlock(n)}</div>
+              <div class="results-cname-wrap">
+                <span class="results-cname">${n.name}</span>
+                ${leading ? '<span class="results-leading">Leading</span>' : ''}
+              </div>
             </div>
             <div class="results-right">
               <div class="results-pct">${pct}%</div>
-              <div class="results-vcount">${v}<br>votes</div>
+              <div class="results-vcount">${v} vote${v === 1 ? '' : 's'}</div>
             </div>
           </div>
           <div class="results-bar-track">
@@ -379,10 +397,10 @@ async function renderResultsView() {
     <div class="results-position-card">
       <div class="results-pos-header">
         <div class="results-pos-icon">🗳️</div>
-        <div class="results-pos-title">All Nominees</div>
+        <div class="results-pos-title">Full Ranking</div>
       </div>
       <div class="results-pos-total">${totalVotes} total votes cast</div>
-      ${rows}
+      ${rows || '<p style="text-align:center;color:var(--muted);padding:20px 0;">No nominees yet.</p>'}
     </div>
   `;
 
@@ -444,19 +462,54 @@ function initCarousel() {
   let pos     = 0;
   let paused  = false;
   let halfW   = strip.scrollWidth / 2;
+  let wrapperWidth = wrapper.clientWidth;
 
-  // Keep halfW accurate no matter what changes the strip's size
+  // Keep halfW / wrapperWidth accurate no matter what changes the strip's size
   const resizeObserver = new ResizeObserver(() => {
     const newHalf = strip.scrollWidth / 2;
     if (newHalf > 0) {
       if (halfW > 0) pos = (pos / halfW) * newHalf;
       halfW = newHalf;
     }
+    wrapperWidth = wrapper.clientWidth;
   });
   resizeObserver.observe(strip);
+  resizeObserver.observe(wrapper);
 
   wrapper.addEventListener('mouseenter', () => { paused = true; });
   wrapper.addEventListener('mouseleave', () => { paused = false; });
+
+  // Coverflow — the card nearest the visual centre sits big, bright and
+  // front-most; cards further out shrink, dim, tilt away in 3D and sink
+  // back, like a fanned-out card carousel.
+  function applyCoverflow() {
+    const cards  = strip.children;
+    const half   = wrapperWidth / 2 || 1;
+    const centerLocal = pos + half; // strip-local x currently under the viewport centre
+
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const offset = cardCenter - centerLocal;
+      const norm   = Math.min(Math.abs(offset) / half, 1); // 0 = centre, 1 = edge
+      const sign   = offset < 0 ? 1 : -1;
+
+      const scale   = 1.18 - norm * 0.46;
+      const opacity = 1 - norm * 0.62;
+      const lift    = norm * 22;
+      const rotateY = sign * norm * 22;
+      const bright  = 1 - norm * 0.4;
+      const z       = Math.round((1 - norm) * 100);
+
+      card.style.setProperty('--s', scale.toFixed(3));
+      card.style.setProperty('--o', opacity.toFixed(2));
+      card.style.setProperty('--y', lift.toFixed(1) + 'px');
+      card.style.setProperty('--r', rotateY.toFixed(1) + 'deg');
+      card.style.setProperty('--b', bright.toFixed(2));
+      card.style.setProperty('--z', String(z));
+      card.classList.toggle('is-featured', norm < 0.12);
+    }
+  }
 
   function tick() {
     if (!paused && halfW > 0) {
@@ -464,6 +517,7 @@ function initCarousel() {
       if (pos >= halfW) pos -= halfW;
       strip.style.transform = `translateX(-${pos}px)`;
     }
+    applyCoverflow();
     requestAnimationFrame(tick);
   }
 

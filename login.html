@@ -57,6 +57,25 @@
       text-align: center; font-size: 24px; letter-spacing: 10px;
       font-family: var(--font-display); font-weight: 700;
     }
+    .pw-wrap { position: relative; }
+    .pw-wrap input { width: 100%; padding-right: 42px; box-sizing: border-box; }
+    .pw-toggle {
+      position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 16px;
+      color: var(--muted); padding: 8px; line-height: 1; opacity: .75;
+      transition: opacity .2s, color .2s;
+    }
+    .pw-toggle:hover { opacity: 1; color: var(--cyan); }
+    .forgot-pw-row { text-align: right; margin: -8px 0 4px; }
+    .forgot-pw-link {
+      background: none; border: none; padding: 0; cursor: pointer;
+      color: var(--cyan); font-size: 12px; font-weight: 600; font-family: var(--font-body);
+    }
+    .forgot-pw-link:hover { text-decoration: underline; }
+    .reset-step-num {
+      font-size: 11px; font-weight: 700; color: var(--cyan);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px;
+    }
     .btn-auth {
       width: 100%; padding: 14px; border-radius: 28px;
       background: var(--cyan); color: #000; border: none;
@@ -120,7 +139,7 @@
       <button type="button" class="auth-tab" id="tab-admin" onclick="switchAuthTab('admin')">Admin</button>
     </div>
 
-    <!-- ═══ STUDENT — STEP 1: enter email, send code ═══ -->
+    <!-- ═══ STUDENT — Student ID + Password ═══ -->
     <div id="student-step-email">
       <div class="auth-card-title">Welcome Back</div>
       <p class="auth-card-sub">
@@ -130,32 +149,26 @@
       <div class="auth-error" id="login-error"></div>
 
       <div class="field-group">
-        <label>PHINMA SJC Email</label>
-        <input type="email" id="login-email" placeholder="firstname.lastname.sjc@phinmaed.com"/>
-        <span class="field-hint">The email you signed up with</span>
+        <label>Student ID Number</label>
+        <input type="text" id="login-id" placeholder="xx-xxxx-xxxxxx" maxlength="14"/>
+        <span class="field-hint">The Student ID you signed up with</span>
       </div>
-
-      <button class="btn-auth" id="send-login-code-btn" onclick="handleSendLoginCode()">Send Verification Code</button>
-    </div>
-
-    <!-- ═══ STUDENT — STEP 2: enter code ═══ -->
-    <div id="student-step-otp" style="display:none;">
-      <div class="auth-card-title">Check Your Email</div>
-      <p class="auth-card-sub" id="login-otp-sent-msg">We sent a 6-digit code to your email.</p>
-
-      <div class="auth-error" id="login-otp-error"></div>
-      <div class="auth-success" id="login-otp-success"></div>
 
       <div class="field-group">
-        <label>Verification Code</label>
-        <input type="text" id="login-otp-code" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric"/>
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="login-password" placeholder="Enter your password" maxlength="72"/>
+          <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)" aria-label="Show password">👁</button>
+        </div>
+      </div>
+      <div class="forgot-pw-row">
+        <button type="button" class="forgot-pw-link" onclick="showResetView('student')">Forgot password?</button>
       </div>
 
-      <button class="btn-auth" id="verify-login-btn" onclick="handleVerifyLogin()">Verify &amp; Log In</button>
-      <button class="btn-auth-secondary" onclick="handleResendLogin()">Resend Code</button>
+      <button class="btn-auth" id="login-btn" onclick="handleStudentLogin()">Log In</button>
     </div>
 
-    <!-- ═══ ADMIN — STEP 1: enter email, send code ═══ -->
+    <!-- ═══ ADMIN — Username + Password ═══ -->
     <div id="admin-step-email" style="display:none;">
       <div class="auth-card-title">Admin Access</div>
       <p class="auth-card-sub">Election Committee use only.</p>
@@ -163,27 +176,108 @@
       <div class="auth-error" id="admin-login-error"></div>
 
       <div class="field-group">
-        <label>Admin Email</label>
-        <input type="email" id="admin-email" placeholder="Enter admin email"/>
+        <label>Username</label>
+        <input type="text" id="admin-username" placeholder="Enter admin username"/>
       </div>
-
-      <button class="btn-auth" id="send-admin-code-btn" onclick="handleSendAdminCode()">Send Verification Code</button>
-    </div>
-
-    <!-- ═══ ADMIN — STEP 2: enter code ═══ -->
-    <div id="admin-step-otp" style="display:none;">
-      <div class="auth-card-title">Check Your Email</div>
-      <p class="auth-card-sub" id="admin-otp-sent-msg">We sent a 6-digit code to your email.</p>
-
-      <div class="auth-error" id="admin-otp-error"></div>
 
       <div class="field-group">
-        <label>Verification Code</label>
-        <input type="text" id="admin-otp-code" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric"/>
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="admin-password" placeholder="Enter admin password" maxlength="72"/>
+          <button type="button" class="pw-toggle" onclick="togglePw('admin-password', this)" aria-label="Show password">👁</button>
+        </div>
+      </div>
+      <div class="forgot-pw-row">
+        <button type="button" class="forgot-pw-link" onclick="showResetView('admin')">Forgot password?</button>
       </div>
 
-      <button class="btn-auth" id="verify-admin-btn" onclick="handleVerifyAdmin()">Verify &amp; Log In</button>
-      <button class="btn-auth-secondary" onclick="handleResendAdmin()">Resend Code</button>
+      <button class="btn-auth" id="admin-login-btn" onclick="handleAdminLogin()">Log In</button>
+    </div>
+
+    <!-- ═══ STUDENT — Forgot Password (Student ID → email OTP → new password) ═══ -->
+    <div id="student-step-reset" style="display:none;">
+      <div class="auth-card-title">Reset Password</div>
+      <p class="auth-card-sub" id="student-reset-sub">Enter your Student ID and we'll email you a code.</p>
+
+      <div class="auth-error" id="student-reset-error"></div>
+      <div class="auth-success" id="student-reset-success"></div>
+
+      <!-- Reset step 1: identify account -->
+      <div id="student-reset-step1">
+        <div class="field-group">
+          <label>Student ID Number</label>
+          <input type="text" id="reset-student-id" placeholder="xx-xxxx-xxxxxx" maxlength="14"/>
+        </div>
+        <button class="btn-auth" id="student-reset-send-btn" onclick="requestPasswordReset('student')">Send Reset Code</button>
+        <button class="btn-auth-secondary" onclick="backToLogin('student')">← Back to Log In</button>
+      </div>
+
+      <!-- Reset step 2: code + new password -->
+      <div id="student-reset-step2" style="display:none;">
+        <div class="field-group">
+          <label>Verification Code</label>
+          <input type="text" id="student-reset-code" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric"/>
+        </div>
+        <div class="field-group">
+          <label>New Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="student-reset-new-password" placeholder="Min. 8 characters" maxlength="72"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('student-reset-new-password', this)" aria-label="Show password">👁</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Confirm New Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="student-reset-confirm-password" placeholder="Re-enter new password" maxlength="72"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('student-reset-confirm-password', this)" aria-label="Show password">👁</button>
+          </div>
+        </div>
+        <button class="btn-auth" id="student-reset-confirm-btn" onclick="confirmPasswordReset('student')">Reset Password</button>
+        <button class="btn-auth-secondary" id="student-resend-btn" onclick="resendResetCode('student')">Resend Code</button>
+      </div>
+    </div>
+
+    <!-- ═══ ADMIN — Forgot Password (Username → email OTP → new password) ═══ -->
+    <div id="admin-step-reset" style="display:none;">
+      <div class="auth-card-title">Reset Password</div>
+      <p class="auth-card-sub" id="admin-reset-sub">Enter your admin username and we'll email you a code.</p>
+
+      <div class="auth-error" id="admin-reset-error"></div>
+      <div class="auth-success" id="admin-reset-success"></div>
+
+      <!-- Reset step 1: identify account -->
+      <div id="admin-reset-step1">
+        <div class="field-group">
+          <label>Username</label>
+          <input type="text" id="reset-admin-username" placeholder="Enter admin username"/>
+        </div>
+        <button class="btn-auth" id="admin-reset-send-btn" onclick="requestPasswordReset('admin')">Send Reset Code</button>
+        <button class="btn-auth-secondary" onclick="backToLogin('admin')">← Back to Log In</button>
+      </div>
+
+      <!-- Reset step 2: code + new password -->
+      <div id="admin-reset-step2" style="display:none;">
+        <div class="field-group">
+          <label>Verification Code</label>
+          <input type="text" id="admin-reset-code" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric"/>
+        </div>
+        <div class="field-group">
+          <label>New Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="admin-reset-new-password" placeholder="Min. 8 characters" maxlength="72"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('admin-reset-new-password', this)" aria-label="Show password">👁</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Confirm New Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="admin-reset-confirm-password" placeholder="Re-enter new password" maxlength="72"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('admin-reset-confirm-password', this)" aria-label="Show password">👁</button>
+          </div>
+        </div>
+        <button class="btn-auth" id="admin-reset-confirm-btn" onclick="confirmPasswordReset('admin')">Reset Password</button>
+        <button class="btn-auth-secondary" id="admin-resend-btn" onclick="resendResetCode('admin')">Resend Code</button>
+      </div>
     </div>
 
   </div>
@@ -197,10 +291,10 @@ function switchAuthTab(tab) {
   const isStudent = tab === 'student';
   document.getElementById('tab-student').classList.toggle('active', isStudent);
   document.getElementById('tab-admin').classList.toggle('active', !isStudent);
+  backToLogin('student', true);
+  backToLogin('admin', true);
   document.getElementById('student-step-email').style.display = isStudent ? '' : 'none';
-  document.getElementById('student-step-otp').style.display   = 'none';
   document.getElementById('admin-step-email').style.display   = isStudent ? 'none' : '';
-  document.getElementById('admin-step-otp').style.display     = 'none';
 }
 
 function showError(id, msg) {
@@ -209,146 +303,262 @@ function showError(id, msg) {
 }
 function hideError(id) { document.getElementById(id).style.display = 'none'; }
 
-document.getElementById('login-otp-code').addEventListener('input', function() {
-  this.value = this.value.replace(/\D/g, '').slice(0, 6);
-});
-document.getElementById('admin-otp-code').addEventListener('input', function() {
-  this.value = this.value.replace(/\D/g, '').slice(0, 6);
-});
+/* ── Show / hide password ── */
+function togglePw(id, btn) {
+  const input = document.getElementById(id);
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  btn.textContent = showing ? '👁' : '🙈';
+  btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+}
 
-/* ═══ STUDENT LOGIN ═══ */
-let pendingLoginEmail = '';
+/* ── Forgot password (Student ID / Username → email OTP → new password) ── */
+let resetEmail = { student: '', admin: '' };
+let resetCooldown = { student: 0, admin: 0 };
+let resetTimer = { student: null, admin: null };
 
-async function handleSendLoginCode() {
-  hideError('login-error');
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  if (!email) { showError('login-error', 'Please enter your email.'); return; }
+function showResetView(type) {
+  document.getElementById(`${type}-step-email`).style.display = 'none';
+  document.getElementById(`${type}-step-reset`).style.display = '';
+  document.getElementById(`${type}-reset-step1`).style.display = '';
+  document.getElementById(`${type}-reset-step2`).style.display = 'none';
+  hideError(`${type}-reset-error`);
+  document.getElementById(`${type}-reset-success`).style.display = 'none';
+}
 
-  const btn = document.getElementById('send-login-code-btn');
-  btn.disabled = true; btn.textContent = 'Sending Code...';
+function backToLogin(type, silent) {
+  const resetView = document.getElementById(`${type}-step-reset`);
+  if (!resetView) return;
+  resetView.style.display = 'none';
+  if (!silent) document.getElementById(`${type}-step-email`).style.display = '';
+  clearInterval(resetTimer[type]);
+  resetCooldown[type] = 0;
+}
 
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: false } // don't create new accounts from the login page
-  });
+async function requestPasswordReset(type) {
+  hideError(`${type}-reset-error`);
 
-  btn.disabled = false; btn.textContent = 'Send Verification Code';
+  const idInput = document.getElementById(type === 'student' ? 'reset-student-id' : 'reset-admin-username');
+  const identifier = idInput.value.trim();
 
-  if (error) {
-    showError('login-error', error.message || 'Could not send the code. Make sure you have signed up first.');
+  if (!identifier) {
+    showError(`${type}-reset-error`, type === 'student' ? 'Please enter your Student ID.' : 'Please enter your username.');
+    return;
+  }
+  if (type === 'student' && !validateStudentId(identifier)) {
+    showError(`${type}-reset-error`, 'Invalid Student ID format. Must be xx-xxxx-xxxxxx.');
     return;
   }
 
-  pendingLoginEmail = email;
-  document.getElementById('login-otp-sent-msg').textContent = `We sent a 6-digit code to ${email}.`;
-  document.getElementById('student-step-email').style.display = 'none';
-  document.getElementById('student-step-otp').style.display   = '';
-}
+  const btn = document.getElementById(`${type}-reset-send-btn`);
+  btn.disabled = true; btn.textContent = 'Sending...';
 
-async function handleVerifyLogin() {
-  hideError('login-otp-error');
-  document.getElementById('login-otp-success').style.display = 'none';
+  const rpcName = type === 'student' ? 'get_student_login_email' : 'get_admin_login_email';
+  const rpcArgs = type === 'student' ? { p_student_id: identifier } : { p_username: identifier };
 
-  const code = document.getElementById('login-otp-code').value.trim();
-  if (code.length !== 6) { showError('login-otp-error', 'Enter the 6-digit code.'); return; }
+  const { data: email, error: lookupErr } = await supabaseClient.rpc(rpcName, rpcArgs);
 
-  const btn = document.getElementById('verify-login-btn');
-  btn.disabled = true; btn.textContent = 'Verifying...';
+  if (lookupErr || !email) {
+    btn.disabled = false; btn.textContent = 'Send Reset Code';
+    showError(`${type}-reset-error`, type === 'student' ? 'Student ID not found.' : 'Invalid admin username.');
+    return;
+  }
 
-  const { error } = await supabaseClient.auth.verifyOtp({
-    email: pendingLoginEmail, token: code, type: 'email'
-  });
+  const { error } = await supabaseClient.auth.signInWithOtp({ email });
 
-  btn.disabled = false; btn.textContent = 'Verify & Log In';
+  btn.disabled = false; btn.textContent = 'Send Reset Code';
 
   if (error) {
-    showError('login-otp-error', error.message || 'Invalid or expired code.');
+    showError(`${type}-reset-error`, error.message || 'Could not send the code. Please try again.');
+    return;
+  }
+
+  resetEmail[type] = email;
+  document.getElementById(`${type}-reset-sub`).textContent = `We sent a 6-digit code to ${email}.`;
+  document.getElementById(`${type}-reset-step1`).style.display = 'none';
+  document.getElementById(`${type}-reset-step2`).style.display = '';
+  startResetCooldown(type);
+}
+
+function startResetCooldown(type) {
+  resetCooldown[type] = 30;
+  const resendBtn = document.getElementById(`${type}-resend-btn`);
+  resendBtn.disabled = true;
+  resetTimer[type] = setInterval(() => {
+    resetCooldown[type]--;
+    if (resetCooldown[type] <= 0) {
+      clearInterval(resetTimer[type]);
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Resend Code';
+    } else {
+      resendBtn.textContent = `Resend Code (${resetCooldown[type]}s)`;
+    }
+  }, 1000);
+}
+
+async function resendResetCode(type) {
+  hideError(`${type}-reset-error`);
+  if (resetCooldown[type] > 0 || !resetEmail[type]) return;
+  const { error } = await supabaseClient.auth.signInWithOtp({ email: resetEmail[type] });
+  if (error) { showError(`${type}-reset-error`, error.message || 'Could not resend the code.'); return; }
+  const successEl = document.getElementById(`${type}-reset-success`);
+  successEl.style.display = 'block';
+  successEl.textContent = '📨 A new code has been sent.';
+  startResetCooldown(type);
+}
+
+async function confirmPasswordReset(type) {
+  hideError(`${type}-reset-error`);
+  document.getElementById(`${type}-reset-success`).style.display = 'none';
+
+  const code = document.getElementById(`${type}-reset-code`).value.trim();
+  const newPassword = document.getElementById(`${type}-reset-new-password`).value;
+  const confirmPassword = document.getElementById(`${type}-reset-confirm-password`).value;
+
+  if (code.length !== 6) { showError(`${type}-reset-error`, 'Enter the 6-digit code from your email.'); return; }
+  if (!newPassword || newPassword.length < 8) { showError(`${type}-reset-error`, 'Password must be at least 8 characters.'); return; }
+  if (newPassword !== confirmPassword) { showError(`${type}-reset-error`, 'Passwords do not match.'); return; }
+
+  const btn = document.getElementById(`${type}-reset-confirm-btn`);
+  btn.disabled = true; btn.textContent = 'Resetting...';
+
+  const { error: verifyErr } = await supabaseClient.auth.verifyOtp({
+    email: resetEmail[type],
+    token: code,
+    type: 'email'
+  });
+
+  if (verifyErr) {
+    btn.disabled = false; btn.textContent = 'Reset Password';
+    showError(`${type}-reset-error`, verifyErr.message || 'Invalid or expired code. Please try again.');
+    return;
+  }
+
+  const { error: pwErr } = await supabaseClient.auth.updateUser({ password: newPassword });
+
+  btn.disabled = false; btn.textContent = 'Reset Password';
+
+  if (pwErr) {
+    showError(`${type}-reset-error`, 'Could not update your password: ' + pwErr.message);
+    return;
+  }
+
+  clearInterval(resetTimer[type]);
+
+  const successEl = document.getElementById(`${type}-reset-success`);
+  successEl.style.display = 'block';
+  successEl.textContent = '✅ Password updated! Redirecting...';
+
+  setTimeout(() => {
+    window.location.href = type === 'student' ? 'index.html' : 'admin.html';
+  }, 1200);
+}
+
+/* ── Auto-format Student ID ── */
+document.getElementById('login-id').addEventListener('input', function() {
+  let val = this.value.replace(/\D/g, '');
+  let formatted = '';
+  if (val.length > 0) formatted += val.substring(0, 2);
+  if (val.length > 2) formatted += '-' + val.substring(2, 6);
+  if (val.length > 6) formatted += '-' + val.substring(6, 12);
+  this.value = formatted;
+});
+
+/* ── Allow Enter key to submit the active tab's form ── */
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const resetOpen = document.getElementById('student-step-reset').style.display !== 'none'
+                  || document.getElementById('admin-step-reset').style.display !== 'none';
+  if (resetOpen) return; // let the reset buttons' own onclick handlers manage this
+  const isStudent = document.getElementById('student-step-email').style.display !== 'none';
+  if (isStudent) handleStudentLogin(); else handleAdminLogin();
+});
+
+/* ═══ STUDENT LOGIN — Student ID + Password, no code sent ═══ */
+function validateStudentId(id) { return /^\d{2}-\d{4}-\d{6}$/.test(id); }
+
+async function handleStudentLogin() {
+  hideError('login-error');
+
+  const studentId = document.getElementById('login-id').value.trim();
+  const password  = document.getElementById('login-password').value;
+
+  if (!studentId || !password) { showError('login-error', 'Please enter your Student ID and password.'); return; }
+  if (!validateStudentId(studentId)) {
+    showError('login-error', 'Invalid Student ID format. Must be xx-xxxx-xxxxxx.'); return;
+  }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Logging In...';
+
+  // Look up the email tied to this Student ID via a restricted RPC
+  // (the anon key can't read profiles directly before a session exists)
+  const { data: email, error: lookupErr } = await supabaseClient
+    .rpc('get_student_login_email', { p_student_id: studentId });
+
+  if (lookupErr || !email) {
+    btn.disabled = false; btn.textContent = 'Log In';
+    showError('login-error', 'Student ID not found. Please sign up first.');
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false; btn.textContent = 'Log In';
+
+  if (error) {
+    showError('login-error', 'Incorrect password. Please try again.');
     return;
   }
 
   window.location.href = 'index.html';
 }
 
-async function handleResendLogin() {
-  hideError('login-otp-error');
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email: pendingLoginEmail, options: { shouldCreateUser: false }
-  });
-  if (error) { showError('login-otp-error', error.message); return; }
-  document.getElementById('login-otp-success').style.display = 'block';
-  document.getElementById('login-otp-success').textContent = '📨 A new code has been sent.';
-}
-
-/* ═══ ADMIN LOGIN — same OTP mechanism, gated by is_admin flag ═══ */
-let pendingAdminEmail = '';
-
-async function handleSendAdminCode() {
+/* ═══ ADMIN LOGIN — Username + Password, no code sent ═══ */
+async function handleAdminLogin() {
   hideError('admin-login-error');
-  const email = document.getElementById('admin-email').value.trim().toLowerCase();
-  if (!email) { showError('admin-login-error', 'Please enter the admin email.'); return; }
 
-  const btn = document.getElementById('send-admin-code-btn');
-  btn.disabled = true; btn.textContent = 'Sending Code...';
+  const username = document.getElementById('admin-username').value.trim();
+  const password = document.getElementById('admin-password').value;
 
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email, options: { shouldCreateUser: false }
-  });
+  if (!username || !password) { showError('admin-login-error', 'Please enter a username and password.'); return; }
 
-  btn.disabled = false; btn.textContent = 'Send Verification Code';
+  const btn = document.getElementById('admin-login-btn');
+  btn.disabled = true; btn.textContent = 'Logging In...';
 
-  if (error) {
-    showError('admin-login-error', error.message || 'Could not send the code.');
+  const { data: email, error: lookupErr } = await supabaseClient
+    .rpc('get_admin_login_email', { p_username: username });
+
+  if (lookupErr || !email) {
+    btn.disabled = false; btn.textContent = 'Log In';
+    showError('admin-login-error', 'Invalid admin username.');
     return;
   }
 
-  pendingAdminEmail = email;
-  document.getElementById('admin-otp-sent-msg').textContent = `We sent a 6-digit code to ${email}.`;
-  document.getElementById('admin-step-email').style.display = 'none';
-  document.getElementById('admin-step-otp').style.display   = '';
-}
-
-async function handleVerifyAdmin() {
-  hideError('admin-otp-error');
-  const code = document.getElementById('admin-otp-code').value.trim();
-  if (code.length !== 6) { showError('admin-otp-error', 'Enter the 6-digit code.'); return; }
-
-  const btn = document.getElementById('verify-admin-btn');
-  btn.disabled = true; btn.textContent = 'Verifying...';
-
-  const { data, error } = await supabaseClient.auth.verifyOtp({
-    email: pendingAdminEmail, token: code, type: 'email'
-  });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
   if (error) {
-    showError('admin-otp-error', error.message || 'Invalid or expired code.');
-    btn.disabled = false; btn.textContent = 'Verify & Log In';
+    btn.disabled = false; btn.textContent = 'Log In';
+    showError('admin-login-error', 'Incorrect password. Please try again.');
     return;
   }
 
-  // Verified — now confirm this account is actually flagged as admin
+  // Double-check the account is actually flagged as admin
   const { data: profile, error: profileErr } = await supabaseClient
     .from('profiles')
     .select('is_admin')
     .eq('id', data.user.id)
     .single();
 
-  btn.disabled = false; btn.textContent = 'Verify & Log In';
+  btn.disabled = false; btn.textContent = 'Log In';
 
   if (profileErr || !profile || !profile.is_admin) {
-    showError('admin-otp-error', 'This account is not authorized as an admin.');
+    showError('admin-login-error', 'This account is not authorized as an admin.');
     await supabaseClient.auth.signOut();
     return;
   }
 
   window.location.href = 'admin.html';
-}
-
-async function handleResendAdmin() {
-  hideError('admin-otp-error');
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email: pendingAdminEmail, options: { shouldCreateUser: false }
-  });
-  if (error) showError('admin-otp-error', error.message);
 }
 </script>
 </body>
